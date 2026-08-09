@@ -96,7 +96,37 @@ class SetupDesktop:
                 check=True
             )
         
-        
+    def set_resolution(self, width=2560, height=1440, rate=60.0):
+            try:
+                output_res = subprocess.run(
+                    ["xrandr"], capture_output=True, text=True, check=True
+                )
+                
+                active_output = None
+                for line in output_res.stdout.splitlines():
+                    if " connected" in line:
+                        active_output = line.split()[0]
+                        break
+                
+                if not active_output:
+                    logger.warning("No active display output found via xrandr.")
+                    return
+
+                logger.info("Setting resolution for display [%s] to %dx%d @ %sHz", active_output, width, height, rate)
+                
+                subprocess.run(
+                    ["xrandr", "--output", active_output, "--mode", f"{width}x{height}", "--rate", str(rate)],
+                    capture_output=False,
+                    text=True,
+                    check=True
+                )
+                logger.info("Resolution applied successfully!")
+                
+            except subprocess.CalledProcessError as e:
+                logger.error("Failed to set resolution: %s", e)
+            except FileNotFoundError:
+                logger.warning("xrandr utility not found.")
+
 if __name__ == "__main__":
 
     scripts = ["installgo.sh"]
@@ -104,6 +134,7 @@ if __name__ == "__main__":
     setup.execute()
     setup.clean()
     setup.keyboard_layout()
+    setup.set_resolution()
 
     p = TabLauncher("https://profile.intra.42.fr/")
     p.openlink()
