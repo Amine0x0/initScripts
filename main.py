@@ -141,48 +141,50 @@ class SetupDesktop:
             logger.warning("xrandr utility not found.")
 
     def update_repositories(self, workspace_path=None):
-        if workspace_path is None:
-            workspace_path = Path.home() / "workspace"
+            if workspace_path is None:
+                workspace_path = Path.home() / "workspace"
 
-        if not workspace_path.exists():
-            logger.warning(f"{YELLOW}Workspace path not found: {workspace_path}{RESET}")
-            return
+            if not workspace_path.exists():
+                logger.warning(f"{YELLOW}Workspace path not found: {workspace_path}{RESET}")
+                return
 
-        logger.info(f"{CYAN}Scanning workspace for Git repositories in: {workspace_path}{RESET}")
-        
-        git_dirs = [git_path.parent for git_path in workspace_path.rglob(".git")]
+            logger.info(f"{CYAN}Scanning workspace for Git repositories in: {workspace_path}{RESET}")
+            
+            git_dirs = [git_path.parent for git_path in workspace_path.rglob(".git")]
 
-        if not git_dirs:
-            logger.warning(f"{YELLOW}No Git repositories found in {workspace_path}{RESET}")
-            return
+            if not git_dirs:
+                logger.warning(f"{YELLOW}No Git repositories found in {workspace_path}{RESET}")
+                return
 
-        logger.info(f"{PURPLE}found repositories:{RESET}")
-        for repo in git_dirs:
-            logger.info(f"{PURPLE}  - {repo.name} ({repo}){RESET}")
+            logger.info(f"{PURPLE}found repositories:{RESET}")
+            for repo in git_dirs:
+                logger.info(f"{PURPLE}  - {repo.name} ({repo}){RESET}")
 
-        for repo in git_dirs:
-            try:
-                status_res = subprocess.run(
-                    ["git", "-C", str(repo), "status", "--porcelain"],
-                    capture_output=True,
-                    text=True,
-                    check=True
-                )
-                
-                if status_res.stdout.strip():
-                    logger.warning(f"{YELLOW}Skipping [{repo.name}]: Uncommitted changes detected.{RESET}")
-                    continue
+            for repo in git_dirs:
+                try:
+                    status_res = subprocess.run(
+                        ["git", "-C", str(repo), "status", "--porcelain"],
+                        capture_output=True,
+                        text=True,
+                        check=True
+                    )
+                    
+                    if status_res.stdout.strip():
+                        logger.warning(f"{YELLOW}Skipping [{repo.name}]: Uncommitted changes detected.{RESET}")
+                        continue
 
-                subprocess.run(
-                    ["git", "-C", str(repo), "pull", "--ff-only"],
-                    capture_output=True,
-                    text=True,
-                    check=True
-                )
-                logger.info(f"{GREEN}Successfully updated: {repo.name}{RESET}")
+                    logger.info(f"Pulling latest changes for: {repo.name}...")
+                    subprocess.run(
+                        ["git", "-C", str(repo), "pull", "--ff-only"],
+                        capture_output=False,
+                        text=True,
+                        check=True
+                    )
+                    logger.info(f"{GREEN}Successfully updated: {repo.name}{RESET}")
 
-            except subprocess.CalledProcessError as e:
-                logger.error(f"{RED}Failed to update repository [{repo.name}]: {e.stderr.strip()}{RESET}")
+                except subprocess.CalledProcessError as e:
+                    err_msg = e.stderr.strip() if getattr(e, 'stderr', None) else str(e)
+                    logger.error(f"{RED}Failed to update repository [{repo.name}]: {err_msg}{RESET}")
 
 if __name__ == "__main__":
     scripts = ["installgo.sh"]
