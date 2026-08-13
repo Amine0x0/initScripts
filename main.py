@@ -187,7 +187,7 @@ class SetupDesktop:
                     logger.error(f"{RED}Failed to update repository [{repo.name}]: {err_msg}{RESET}")
 
 if __name__ == "__main__":
-    scripts = ["installgo.sh"]
+    scripts = ["installgo.sh", "installcode.sh"]
     setup = SetupDesktop(scripts)
     setup.execute()
     setup.clean()
