@@ -108,7 +108,29 @@ class SetupDesktop:
             check=True
         )
         logger.info(f"{GREEN}Keyboard layout set to {layout}{RESET}")
-        
+
+    def cherry_keyboard_swap(self):
+            target_name = 'N: Name="Cherry GmbH CHERRY Wired Keyboard"'
+            
+            try:
+                with open("/proc/bus/input/devices", "r") as f:
+                    content = f.read()
+                    
+                if target_name in content:
+                    logger.info(f"{GREEN}Cherry keyboard detected. Swapping Alt and Win/Command...{RESET}")
+                    subprocess.run(
+                        ["setxkbmap", "-option", "altwin:swap_alt_win"],
+                        check=True
+                    )
+                    logger.info(f"{GREEN}Successfully swapped Alt and Win keys.{RESET}")
+                else:
+                    logger.info("Cherry keyboard not connected. Skipping key swap.")
+                    
+            except FileNotFoundError:
+                logger.warning("/proc/bus/input/devices not found. Are you on Linux?")
+            except Exception as e:
+                logger.error(f"{RED}Failed to check/swap keyboard keys: {e}{RESET}")
+
     def set_resolution(self, width=2560, height=1440, rate=60.0):
         try:
             output_res = subprocess.run(
@@ -194,6 +216,7 @@ if __name__ == "__main__":
     setup.keyboard_layout()
     setup.set_resolution()
     setup.update_repositories()
+    setup.cherry_keyboard_swap()
     if enable_tab_launch:
         p = TabLauncher("https://profile.intra.42.fr/")
         p.openlink()
